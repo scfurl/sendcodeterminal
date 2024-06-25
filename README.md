@@ -65,7 +65,7 @@ The package was published using the following code
 
 ```sh
 vsce package
-
+vsce publish
 ```
 
 ---

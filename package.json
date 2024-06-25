@@ -3,6 +3,11 @@
   "displayName": "SendCodeTerminal",
   "description": "Send code to terminal in a language agnostic manner",
   "version": "0.0.1",
+  "icon": "assets/icon.png",
+  "publisher": "scfurl", 
+  "categories": [
+      "Other"
+  ],
   "engines": {
     "vscode": "^1.90.0"
   },

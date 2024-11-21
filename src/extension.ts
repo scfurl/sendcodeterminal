@@ -1,38 +1,5 @@
 import * as vscode from 'vscode';
 
-class EditorToTerminal {
-  public map = new Map<string, vscode.Terminal>();
-
-  private key(editor: vscode.TextEditor) {
-    return editor.document.uri.toString();
-  }
-
-  set(editor: vscode.TextEditor, terminal: vscode.Terminal) {
-    const key = this.key(editor);
-    this.map.set(key, terminal);
-  }
-
-  get(editor: vscode.TextEditor) {
-    const key = this.key(editor);
-    return this.map.get(key);
-  }
-
-  delete(editor: vscode.TextEditor) {
-    const key = this.key(editor);
-    this.map.delete(key);
-  }
-
-  terminals() {
-    return Array.from(this.map.values());
-  }
-
-  lastTerminal() {
-    return this.terminals().at(-1);
-  }
-}
-
-let editorToTerminal = new EditorToTerminal();
-
 export function activate(context: vscode.ExtensionContext) {
   markExtensionActive(true);
 
@@ -56,6 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
     let selection = editor.selection;
     let text = editor.document.getText(selection);
 
+    // If no selection, send the current line
     if (!text) {
       const position = editor.selection.active;
       const lineText = editor.document.lineAt(position.line).text;
@@ -63,18 +31,17 @@ export function activate(context: vscode.ExtensionContext) {
       editor.selection = new vscode.Selection(position.line, 0, position.line, lineText.length);
     }
 
-    const terminal = editorToTerminal.get(editor) ?? vscode.window.activeTerminal ?? editorToTerminal.lastTerminal();
+    const terminal = vscode.window.activeTerminal;
 
     if (!terminal) {
       vscode.window.showErrorMessage("No active terminal");
       return;
     }
 
-    editorToTerminal.set(editor, terminal);
-
     terminal.sendText(wrapTemplate(dedent(text)), true);
     terminal.show();
 
+    // Move the cursor to the next line
     const nextLine = selection.end.line + 1;
     if (nextLine < editor.document.lineCount) {
       const newPosition = new vscode.Position(nextLine, 0);
@@ -82,6 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
       editor.revealRange(new vscode.Range(newPosition, newPosition));
     }
 
+    // Ensure the editor stays visible
     setTimeout(() => {
       if (editor) {
         vscode.window.showTextDocument(editor.document, editor.viewColumn);
@@ -89,19 +57,7 @@ export function activate(context: vscode.ExtensionContext) {
     }, 200);
   });
 
-  const terminalCloseHook = vscode.window.onDidCloseTerminal((terminal) => {
-    for (let [editor, term] of editorToTerminal.map) {
-      if (term === terminal) {
-        editorToTerminal.map.delete(editor);
-        break;
-      }
-    }
-    if (!editorToTerminal.terminals().length) {
-      markExtensionActive(false);
-    }
-  });
-
-  context.subscriptions.push(sendCommandDisposable, terminalCloseHook);
+  context.subscriptions.push(sendCommandDisposable);
 }
 
 export function deactivate() {

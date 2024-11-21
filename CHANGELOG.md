@@ -4,6 +4,10 @@ All notable changes to the "sendcodeterminal" extension will be documented in th
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [Unreleased]
+## 0.0.1
 
 - Initial release
+
+## 2.0.0
+
+- Changed to send code to the active terminal
